@@ -1,56 +1,86 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
 
-const DB_DIR = 'mock_database';
-const KEYWORD_HISTORY_FILE = path.join(DB_DIR, 'search_history_keyword.json');
-const SELECTION_HISTORY_FILE = path.join(DB_DIR, 'search_history_selection.json');
+// in ECMAScript Modules (ESM), __dirname is not available directly like in CommonJS
+// use 'url' and 'path' modules to achieve similar functionality
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Ensure the database directory exists
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR);
-}
+// define the path to the mock database directory
+const dbDirectory = path.resolve(__dirname, 'mock_database');
 
-// Initialize history files if they don't exist
-if (!fs.existsSync(KEYWORD_HISTORY_FILE)) {
-  fs.writeFileSync(KEYWORD_HISTORY_FILE, JSON.stringify([], null, 2));
-}
-if (!fs.existsSync(SELECTION_HISTORY_FILE)) {
-  fs.writeFileSync(SELECTION_HISTORY_FILE, JSON.stringify([], null, 2));
-}
+/**
+ * Reads and parses JSON data from a file
+ * @param {string} collection - the name of the collection file
+ * @returns {Promise<Array|Object>} the parsed JSON data from the collection
+ * @throws {Error} an error if there's an issue reading or parsing the data
+ */
+const _read = async (collection) => {
+    try {
+        const fullPath = path.resolve(dbDirectory, `${collection}.json`);
+        const data = await fs.promises.readFile(fullPath, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        throw new Error(`Error reading data from collection ${collection}: ${error.message}`);
+    }
+};
 
-function readJsonFile(filePath) {
-  try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error(`Error reading ${filePath}:`, error);
-    return [];
-  }
-}
+/**
+ * Inserts a new entry in a collection
+ * @param {string} collection - the name of the collection file
+ * @param {Object} data - the data to be added to the collection
+ * @returns {Promise<void>} a Promise that resolves when the operation is complete
+ * @throws {Error} an error if there's an issue inserting the record
+ */
+export const insert = async (collection, data) => {
+    try {
+        // generate a simple unique ID based on timestamp and random number
+        const _id = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-function writeJsonFile(filePath, data) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error(`Error writing to ${filePath}:`, error);
-  }
-}
+        // add the generated _id to the record
+        const recordWithId = { ...data, _id };
 
-function addToHistory(filePath, item) {
-  const history = readJsonFile(filePath);
-  if (!history.includes(item)) {
-    history.push(item);
-    writeJsonFile(filePath, history);
-  }
-}
+        // read existing records from the collection
+        const records = await _read(collection);
 
-function getHistory(filePath) {
-  return readJsonFile(filePath);
-}
+        // push the new record with the unique _id
+        records.push(recordWithId);
 
-module.exports = {
-  addToHistory,
-  getHistory,
-  KEYWORD_HISTORY_FILE,
-  SELECTION_HISTORY_FILE
-}; 
+        // write the updated records back to the file
+        const fullPath = path.resolve(dbDirectory, `${collection}.json`);
+        await fs.promises.writeFile(fullPath, JSON.stringify(records));
+    } catch (error) {
+        throw new Error(`Error inserting record in collection ${collection}: ${error.message}`);
+    }
+};
+
+/**
+ * Finds all records or a record by ID in a collection
+ * @param {string} collection - the name of the collection file
+ * @param {Object|null} query - an object with a single key and value to match
+ * @returns {Promise<Array|Object|null>} the record(s) found in the collection
+ * @throws {Error} an error if there's an issue finding the record(s)
+ */
+export const find = async (collection, query = null) => {
+    try {
+        const records = await _read(collection);
+
+        if (query) {
+            // destructure the key-value pair from the query object
+            const [key, value] = Object.entries(query)[0];
+
+            // attempt to get matching records
+            const matches = records.filter((record) => record[key] === value);
+
+            // return matching records - could be empty array if none found
+            return matches;
+        } else {
+            // return all records if no query is provided
+            return records;
+        }
+    } catch (error) {
+        // throw an error if there's an issue finding the records
+        throw new Error(`Error finding record in collection ${collection}: ${error.message}`);
+    }
+};
