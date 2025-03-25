@@ -1,99 +1,30 @@
-const axios = require('axios');
+import axios from 'axios';
 
-const ANILIST_API_URL = 'https://graphql.anilist.co';
+// base anilist API url
+const API_URL = 'https://graphql.anilist.co';
 
-const searchQuery = `
-  query ($search: String) {
-    Page (page: 1, perPage: 10) {
-      media (search: $search, type: ANIME) {
-        id
-        title {
-          romaji
-          english
-          native
-        }
-        type
-        format
-        status
-        description
-        episodes
-        duration
-        genres
-        averageScore
-        coverImage {
-          large
-        }
-      }
-    }
-  }
-`;
-
-const getDetailsQuery = `
-  query ($id: Int) {
-    Media (id: $id) {
-      id
-      title {
-        romaji
-        english
-        native
-      }
-      type
-      format
-      status
-      description
-      episodes
-      duration
-      genres
-      averageScore
-      coverImage {
-        large
-      }
-      studios {
-        nodes {
-          name
-        }
-      }
-      startDate {
-        year
-        month
-        day
-      }
-      endDate {
-        year
-        month
-        day
-      }
-    }
-  }
-`;
-
-async function searchByKeyword(keyword) {
+// Search API by Keyword
+export const searchByKeyword = async (keyword) => {
   try {
-    const response = await axios.post(ANILIST_API_URL, {
-      query: searchQuery,
-      variables: { search: keyword }
-    });
-    return response.data.data.Page.media;
+    // TODO
+      
+      
+      
   } catch (error) {
     console.error('Error searching AniList:', error.message);
     throw error;
   }
-}
+};
 
-async function getDetailsById(id) {
+// Get Detailed Data by Unique Identifier
+export const getByIdentifier = async (id) => {
   try {
-    const response = await axios.post(ANILIST_API_URL, {
-      query: getDetailsQuery,
-      variables: { id: parseInt(id) }
-    });
-    return response.data.data.Media;
+    // TODO
+      
+      
+      
   } catch (error) {
     console.error('Error fetching details from AniList:', error.message);
     throw error;
   }
-}
-
-module.exports = {
-  searchByKeyword,
-  getDetailsById
-}; 
+};

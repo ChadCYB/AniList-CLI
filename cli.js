@@ -1,31 +1,39 @@
-#!/usr/bin/env node
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
-const { program } = require('commander');
-const { searchAnime, showHistory } = require('./app');
+import { searchAnime, showHistory } from './app.js';
 
-program
-  .name('anilist-cli')
-  .description('CLI application for searching and viewing anime information from AniList')
-  .version('1.0.0');
-
-program
-  .command('search')
-  .description('Search for anime by keyword')
-  .argument('<keyword>', 'Search keyword')
-  .action(async (keyword) => {
-    await searchAnime(keyword);
-  });
-
-program
-  .command('history')
-  .description('View search or selection history')
-  .argument('<type>', 'Type of history to view (keywords or selections)')
-  .action(async (type) => {
-    if (type !== 'keywords' && type !== 'selections') {
-      console.error('Error: Type must be either "keywords" or "selections"');
-      process.exit(1);
+// hideBin is a helper that removes the first two elements from process.argv
+yargs(hideBin(process.argv))
+  .usage('$0 Usage <command> [options]')
+  .command(
+    'search <keyword>',
+    'Search for anime by keyword',
+    (yargs) => {
+      yargs.positional('keyword', {
+        describe: 'Name of the anime',
+        type: 'string',
+      });
+    },
+    async (argv) => {
+      await searchAnime(argv.keyword);
     }
-    await showHistory(type);
-  });
-
-program.parse(); 
+  )
+  .command(
+    'history <type>',
+    'View a history of searches and selected anime',
+    (yargs) => {
+      yargs.positional('type', {
+        describe: 'View history by keywords or selections',
+        type: 'string',
+        choices: ['keywords', 'selections'],
+      });
+    },
+    async (argv) => {
+      await showHistory(argv.type);
+    }
+  )
+  .strict()  // handle incorrect commands
+  .demandCommand(1, 'You need at least one command before moving on')
+  .help()
+  .argv;
