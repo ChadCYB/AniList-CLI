@@ -19,14 +19,41 @@ const COLLECTIONS = {
 
 export const searchAnime = async (keyword) => {
   try {
-    //TODO - Search Functionality
-      
-      
-      
+    //Show the keyword being searched
+    console.log(`${colors.cyan}🔍 Searching for: "${keyword}"...${colors.reset}`);
+
+    // Fetch search results
+    const results = await searchByKeyword(keyword); //uses default page=1 and perPage = 10
+
+    //Informs no results found
+    if (!results || results.length === 0) {
+      console.log(`${colors.yellow}⚠️ No results found for "${keyword}".${colors.reset}`);
+      return;
+    }
+    
+    // Display list of choices
+    const choices = results.map(anime => ({
+      name: `${anime.title.english || anime.title.romaji} (ID: ${anime.id})`,
+      value: anime.id
+    }));
+
+    // Prompt user to select an anime via inquirer list
+    const { selectedAnimeId } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selectedAnimeId',
+        message: '🎥 Select an anime to view details:',
+        choices
+      }
+    ]);
+
+    // Fetch and display details of the selected anime
+    await getByIdentifier(selectedAnimeId);
+
   } catch (error) {
     console.error(`${colors.red}Error:${colors.reset}`, error.message);
   }
-}
+};
 
 export const showHistory = async (type) => {
   try {
