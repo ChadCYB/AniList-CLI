@@ -1,6 +1,6 @@
-import inquirer from 'inquirer';
-import { searchByKeyword, getByIdentifier } from './api.js';
-import { insert, find } from './db.js';
+import inquirer from "inquirer";
+import { getByIdentifier, searchByKeyword } from "./api.js";
+import { find, insert } from "./db.js";
 
 // ANSI color codes
 const colors = {
@@ -13,12 +13,21 @@ const colors = {
 
 // Collection names for the database
 const COLLECTIONS = {
-  KEYWORDS: 'search_history_keywords',
-  SELECTIONS: 'search_history_selections'
+  KEYWORDS: "search_history_keyword",
+  SELECTIONS: "search_history_selection",
 };
 
 export const searchAnime = async (keyword) => {
   try {
+
+    const existing = await find(COLLECTIONS.KEYWORDS, { keyword });
+    if (existing.length === 0) {
+      await insert(COLLECTIONS.KEYWORDS, {
+        keyword,
+        timestamp: new Date().getTime(),
+      });
+    }
+
     //Show the keyword being searched
     console.log(`${colors.cyan}🔍 Searching for: "${keyword}"...${colors.reset}`);
 
@@ -50,6 +59,14 @@ export const searchAnime = async (keyword) => {
     // Fetch and display details of the selected anime
     await getByIdentifier(selectedAnimeId);
 
+    const selectedAnime = results.find(anime => anime.id === selectedAnimeId);
+    
+    await insert(COLLECTIONS.SELECTIONS, {
+      keyword,
+      selected: selectedAnime.title.english || selectedAnime.title.romaji || "Unknown Title",
+      id: selectedAnimeId
+    });
+
   } catch (error) {
     console.error(`${colors.red}Error:${colors.reset}`, error.message);
   }
@@ -57,18 +74,69 @@ export const searchAnime = async (keyword) => {
 
 export const showHistory = async (type) => {
   try {
-    if (type === 'keywords') {
-      //TODO - History Functionality (keywords)
-      
-      
+    // Show search history: Usage: node cli.js history keywords
+    if (type === "keywords") {
+      const history = await find(COLLECTIONS.KEYWORDS);
 
+      if (history.length === 0) {
+        console.log("No keyword in history.");
+        return;
+      }
+
+      const choices = ["Exit", ...history.map((entry) => entry.keyword)];
+
+      const { selectedKeyword } = await inquirer.prompt([
+        {
+          type: "list",
+          name: "selectedKeyword",
+          message: "Select a keyword to search:",
+          choices,
+        },
+      ]);
+
+      if (selectedKeyword === "Exit") {
+        console.log("Exiting...");
+        return;
+      }
+
+      await searchAnime(selectedKeyword);
     } else {
-      //TODO - History Functionality (selections)
+      const history = await find(COLLECTIONS.SELECTIONS);
+
+      if (history.length === 0) {
+        console.log("No selection in history.");
+        return;
+      }
+
+      const choices = ["Exit", ...history.map(
+        (entry) => `${entry.selected} (Keyword: ${entry.keyword}, ID: ${entry.id})`
+      )];
+
+      const { selectedEntry } = await inquirer.prompt([
+        {
+          type: "list",
+          name: "selectedEntry",
+          message: "Select an entry to view details:",
+          choices,
+        }
+      ]);
       
-      
-      
+      if (selectedEntry === "Exit") {
+        console.log("Exiting...");
+        return;
+      }
+
+      const idMatch = selectedEntry.match(/ID:\s*(\d+)/);
+      const animeId = idMatch ? parseInt(idMatch[1]) : null;
+
+      if (!animeId) {
+        console.log("Invalid selection.");
+        return;
+      }
+
+      await getByIdentifier(animeId);
     }
   } catch (error) {
     console.error(`${colors.red}Error:${colors.reset}`, error.message);
   }
-}
+};
