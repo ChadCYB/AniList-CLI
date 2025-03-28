@@ -4,40 +4,38 @@ import axios from 'axios';
 const API_URL = 'https://graphql.anilist.co';
 
 // Search API by Keyword
-export const searchByKeyword = async (keyword, page = 1, perPage = 10) => {
+export const searchByKeyword = async (keyword, page = 1, perPage = 10, results = []) => {
   try {
     const query = `
-    query ($page: Int, $perPage: Int, $search: String) {
-      Page(page: $page, perPage: $perPage) {
-        pageInfo {
-          hasNextPage
-        }
-        media (search: $search, type: ANIME) {
-          id
-          title {
-            romaji
-            english
+      query ($page: Int, $perPage: Int, $search: String) {
+        Page(page: $page, perPage: $perPage) {
+          pageInfo {
+            hasNextPage
+          }
+          media(search: $search, type: ANIME) {
+            id
+            title {
+              romaji
+              english
+            }
           }
         }
       }
-    }
-  `;
+    `;
+
     const variables = { page, perPage, search: keyword };
-    console.log(`🔍 Searching for: "${keyword}"`);
     const response = await axios.post(API_URL, { query, variables });
-    const { hasNextPage } = response.data.data.Page.pageInfo;
+    const pageInfo = response.data.data.Page.pageInfo;
     const mediaList = response.data.data.Page.media;
 
-    console.log(`\n📄 Page ${page}:`);
-    mediaList.forEach((anime) => {
-      console.log(`🎥 ${anime.title.english || anime.title.romaji} (ID: ${anime.id})`);
-    });
+    results.push(...mediaList);
 
-    // Fetch next page if available
-    if (hasNextPage) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await searchByKeyword(keyword, page + 1, perPage);
+    if (pageInfo.hasNextPage) {
+      await new Promise(resolve => setTimeout(resolve, 500)); // optional delay
+      return await searchByKeyword(keyword, page + 1, perPage, results);
     }
+
+    return results;
 
   } catch (error) {
     console.error('Error searching AniList:', error.message);
@@ -45,43 +43,51 @@ export const searchByKeyword = async (keyword, page = 1, perPage = 10) => {
   }
 };
 
-// Get Detailed Data by Unique Identifier
 export const getByIdentifier = async (id) => {
   try {
     const query = `
-    query ($id: Int) { 
-      Media (id: $id, type: ANIME) { 
-        id
-        title {
-          romaji
-          english
-          native
+      query ($id: Int) { 
+        Media (id: $id, type: ANIME) { 
+          id
+          title {
+            romaji
+            english
+            native
+          }
+          episodes
+          averageScore
+          genres
+          season
+          seasonYear
+          description
         }
-        episodes
-        averageScore
-        genres
-        season
-        seasonYear
-        description
       }
-    }`;
+    `;
 
-    const variables = { id: id };
+    const variables = { id };
     const response = await axios.post(API_URL, { query, variables });
     const anime = response.data.data.Media;
 
-    console.log("\n🎬 Anime Details:");
-    console.log(`📌 Title: ${anime.title.english || anime.title.romaji || anime.title.native}`);
-    console.log(`📆 Season: ${anime.season} ${anime.seasonYear}`);
-    console.log(`⭐ Rating: ${anime.averageScore}/100`);
-    console.log(`🎭 Genres: ${anime.genres.join(", ")}`);
-    console.log(`📺 Episodes: ${anime.episodes || "Unknown"}`);
-    console.log(`📝 Description:\n${anime.description.replace(/<[^>]*>/g, "")}\n`);
+    // Clean description by stripping HTML tags (optional)
+    const cleanedDescription = anime.description?.replace(/<[^>]*>/g, "") || "";
 
-
+    return {
+      id: anime.id,
+      title: {
+        romaji: anime.title.romaji,
+        english: anime.title.english,
+        native: anime.title.native,
+      },
+      episodes: anime.episodes || null,
+      averageScore: anime.averageScore || null,
+      genres: anime.genres || [],
+      season: anime.season || null,
+      seasonYear: anime.seasonYear || null,
+      description: cleanedDescription,
+    };
 
   } catch (error) {
-  console.error('Error fetching details from AniList:', error.message);
-  throw error;
+    console.error('Error fetching details from AniList:', error.message);
+    throw error;
   }
 };
