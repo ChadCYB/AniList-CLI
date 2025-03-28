@@ -57,7 +57,16 @@ export const searchAnime = async (keyword) => {
     ]);
 
     // Fetch and display details of the selected anime
-    await getByIdentifier(selectedAnimeId);
+    const anime = await getByIdentifier(selectedAnimeId);
+
+    console.log("\n🎬 Anime Details:");
+    console.log(`📌 Title: ${anime.title.english || anime.title.romaji || anime.title.native}`);
+    console.log(`📆 Season: ${anime.season} ${anime.seasonYear}`);
+    console.log(`⭐ Rating: ${anime.averageScore}/100`);
+    console.log(`🎭 Genres: ${anime.genres.join(", ")}`);
+    console.log(`📺 Episodes: ${anime.episodes || "Unknown"}`);
+    console.log(`📝 Description:\n${anime.description.replace(/<[^>]*>/g, "")}\n`);
+    
 
     const selectedAnime = results.find(anime => anime.id === selectedAnimeId);
     
@@ -134,7 +143,15 @@ export const showHistory = async (type) => {
         return;
       }
 
-      await getByIdentifier(animeId);
+      const anime = await getByIdentifier(animeId);
+
+      console.log("\n🎬 Anime Details:");
+      console.log(`📌 Title: ${anime.title.english || anime.title.romaji || anime.title.native}`);
+      console.log(`📆 Season: ${anime.season} ${anime.seasonYear}`);
+      console.log(`⭐ Rating: ${anime.averageScore}/100`);
+      console.log(`🎭 Genres: ${anime.genres.join(", ")}`);
+      console.log(`📺 Episodes: ${anime.episodes || "Unknown"}`);
+      console.log(`📝 Description:\n${anime.description.replace(/<[^>]*>/g, "")}\n`);
     }
   } catch (error) {
     console.error(`${colors.red}Error:${colors.reset}`, error.message);
