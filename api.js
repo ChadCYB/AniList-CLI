@@ -43,6 +43,7 @@ export const searchByKeyword = async (keyword, page = 1, perPage = 10, results =
   }
 };
 
+// Get Detailed Data by Unique Identifier
 export const getByIdentifier = async (id) => {
   try {
     const query = `

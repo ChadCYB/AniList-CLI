@@ -7,7 +7,6 @@ const colors = {
   red: '\x1b[31m',
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
-  white: '\x1b[37m',
   reset: '\x1b[0m'
 };
 
@@ -28,13 +27,13 @@ export const searchAnime = async (keyword) => {
       });
     }
 
-    //Show the keyword being searched
+    // Show the keyword being searched
     console.log(`${colors.cyan}🔍 Searching for: "${keyword}"...${colors.reset}`);
 
     // Fetch search results
     const results = await searchByKeyword(keyword); //uses default page=1 and perPage = 10
 
-    //Informs no results found
+    // Informs no results found
     if (!results || results.length === 0) {
       console.log(`${colors.yellow}⚠️ No results found for "${keyword}".${colors.reset}`);
       return;

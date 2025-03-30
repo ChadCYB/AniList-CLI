@@ -6,6 +6,7 @@ import { searchAnime, showHistory } from './app.js';
 // hideBin is a helper that removes the first two elements from process.argv
 yargs(hideBin(process.argv))
   .usage('$0 Usage <command> [options]')
+  // Search Command
   .command(
     'search <keyword>',
     'Search for anime by keyword',
@@ -19,6 +20,7 @@ yargs(hideBin(process.argv))
       await searchAnime(argv.keyword);
     }
   )
+  // History Command
   .command(
     'history <type>',
     'View a history of searches and selected anime',
