@@ -80,6 +80,7 @@ export const searchAnime = async (keyword) => {
   }
 };
 
+ // History Functionality
 export const showHistory = async (type) => {
   try {
     // Show search history: Usage: node cli.js history keywords
@@ -109,6 +110,7 @@ export const showHistory = async (type) => {
 
       await searchAnime(selectedKeyword);
     } else {
+      // Show selections history: Usage: node cli.js history selections
       const history = await find(COLLECTIONS.SELECTIONS);
 
       if (history.length === 0) {

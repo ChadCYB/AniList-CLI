@@ -13,9 +13,9 @@
     "Ryan Kwan",
     "Darius Ayvazian",
     "Angel Gaytan",
-    "Yicheng Chen"
+    "Ethan Chen"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.8.4",
     "inquirer": "^12.5.0",
