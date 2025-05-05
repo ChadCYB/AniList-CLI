@@ -1,86 +1,117 @@
-import fs from 'fs';
-import path from 'path';
-import url from 'url';
-
-// in ECMAScript Modules (ESM), __dirname is not available directly like in CommonJS
-// use 'url' and 'path' modules to achieve similar functionality
-const __filename = url.fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// define the path to the mock database directory
-const dbDirectory = path.resolve(__dirname, 'mock_database');
+import dotenv from 'dotenv';
+import { MongoClient } from 'mongodb';
 
 /**
- * Reads and parses JSON data from a file
- * @param {string} collection - the name of the collection file
- * @returns {Promise<Array|Object>} the parsed JSON data from the collection
- * @throws {Error} an error if there's an issue reading or parsing the data
+ * ES6 module for interacting with MongoDB
+ * @returns {Object} An object containing functions to interact with MongoDB, such as connect, close, insert, find, and update.
  */
-const _read = async (collection) => {
-    try {
-        const fullPath = path.resolve(dbDirectory, `${collection}.json`);
-        const data = await fs.promises.readFile(fullPath, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        throw new Error(`Error reading data from collection ${collection}: ${error.message}`);
-    }
-};
+const mongo = () => {
+    // load the environment variables from the .env file
+    dotenv.config();
 
-/**
- * Inserts a new entry in a collection
- * @param {string} collection - the name of the collection file
- * @param {Object} data - the data to be added to the collection
- * @returns {Promise<void>} a Promise that resolves when the operation is complete
- * @throws {Error} an error if there's an issue inserting the record
- */
-export const insert = async (collection, data) => {
-    try {
-        // generate a simple unique ID based on timestamp and random number
-        const _id = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const { DB_USER, DB_PASSWORD, DB_URL, DB_NAME } = process.env;
+    const mongoURL = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_URL}/${DB_NAME}?retryWrites=true&w=majority&appName=Cluster0`;
 
-        // add the generated _id to the record
-        const recordWithId = { ...data, _id };
+    let client;
+    let db;
 
-        // read existing records from the collection
-        const records = await _read(collection);
+    /**
+     * Opens a connection to the MongoDB Atlas database
+     * @returns {Promise<void>} resolves once the connection is established
+     */
+    async function connect() {
+        try {
+            client = new MongoClient(mongoURL);
+            await client.connect();
+            db = client.db();
 
-        // push the new record with the unique _id
-        records.push(recordWithId);
-
-        // write the updated records back to the file
-        const fullPath = path.resolve(dbDirectory, `${collection}.json`);
-        await fs.promises.writeFile(fullPath, JSON.stringify(records));
-    } catch (error) {
-        throw new Error(`Error inserting record in collection ${collection}: ${error.message}`);
-    }
-};
-
-/**
- * Finds all records or a record by ID in a collection
- * @param {string} collection - the name of the collection file
- * @param {Object|null} query - an object with a single key and value to match
- * @returns {Promise<Array|Object|null>} the record(s) found in the collection
- * @throws {Error} an error if there's an issue finding the record(s)
- */
-export const find = async (collection, query = null) => {
-    try {
-        const records = await _read(collection);
-
-        if (query) {
-            // destructure the key-value pair from the query object
-            const [key, value] = Object.entries(query)[0];
-
-            // attempt to get matching records
-            const matches = records.filter((record) => record[key] === value);
-
-            // return matching records - could be empty array if none found
-            return matches;
-        } else {
-            // return all records if no query is provided
-            return records;
+            console.log('Connected to MongoDB');
+        } catch (err) {
+            console.error(err);
         }
-    } catch (error) {
-        // throw an error if there's an issue finding the records
-        throw new Error(`Error finding record in collection ${collection}: ${error.message}`);
     }
+
+    /**
+     * Closes the connection to the MongoDB Atlas database
+     * @returns {Promise<void>} Resolves once the connection is closed
+     */
+    async function close() {
+        try {
+            await client.close();
+
+            console.log('Closed connection to MongoDB');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    /**
+     * Inserts a new document into the specified collection
+     * @param {string} collectionName - The name of the collection where data will be inserted
+     * @param {Object} data - The data to be inserted into the collection
+     * @returns {Promise<void>} Resolves once the document is inserted
+     */
+    async function insert(collectionName, data) {
+        try {
+            const collection = db.collection(collectionName);
+            await collection.insertOne(data);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    /**
+     * Finds documents in the specified collection based on a query
+     * @async
+     * @function find
+     * @param {string} collectionName - The name of the collection to query
+     * @param {Object} [query] - The query object used to filter documents (optional)
+     * @returns {Cursor} A MongoDB Cursor object used to iterate over query results
+     */
+    async function find(collectionName, query) {
+        try {
+            const collection = db.collection(collectionName);
+
+            if (query) {
+                const cursor = await collection.find(query);
+                return cursor;
+            } else {
+                const cursor = await collection.find({});
+                return cursor;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    /**
+     * Updates documents in the specified collection
+     * @async
+     * @function update
+     * @param {string} collectionName - The name of the collection to update
+     * @param {string} deckIdentifier - The identifier used to find the document to update
+     * @param {Object} data - The data to update the document with
+     * @returns {Promise<void>} Resolves once the document is updated
+     */
+    async function update(collectionName, deckIdentifier, data) {
+        try {
+            const collection = db.collection(collectionName);
+            await collection.updateOne(
+                { deckId: deckIdentifier },
+                { $set: data }
+            );
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    return {
+        connect,
+        close,
+        insert,
+        find,
+        update
+    };
 };
+
+export default mongo();
