@@ -30,15 +30,18 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // TODO: Get anime by ID
-    // - Interacts with the api.js to perform the get data by id and returns a JSON response
-    // - Saves unique selections to the MongoDB SearchHistorySelection collection
 
+    const animeData = await api.getByIdentifier(id);
 
+    const existing = await db.find('SearchHistorySelection', { id: animeData.id });
 
+    const existingArray = await existing.toArray();
 
+    if (existingArray.length === 0) {
+      await db.insert('SearchHistorySelection', animeData);
+    }
+    return res.json(animeData);
 
-    // return res.json(XXX);
   } catch (error) {
     console.error('Error getting anime details:', error);
     return res.status(500).json({ error: 'Internal server error' });
