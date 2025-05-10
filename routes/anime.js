@@ -30,6 +30,9 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    // TODO: Get anime by ID
+    // - Interacts with the api.js to perform the get data by id and returns a JSON response
+    // - Saves unique selections to the MongoDB SearchHistorySelection collection
 
     const animeData = await api.getByIdentifier(id);
 
