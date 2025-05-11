@@ -18,20 +18,18 @@ router.get('/', async (req, res) => {
     // return res.json(XXX);
 
     if (type === 'keywords') {
+
+      const keywords = await db.find('SearchHistoryKeyword', {}, { projection: { _id: 0 } });
+
+      return res.json(keywords);
       // If the value is keywords
       // TODO: Get search history by keywords
-      // - Is able to retrieve all saved selections from the SearchHistorySelection collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
-
-
-
-
-      
-      // return res.json(XXX);
+      // - Is able to retrieve all saved selections from the SearchHistoryKeyword collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
       
     } else {
       // If the value is selections
       // TODO: Get search history by selections
-      // - Is able to retrieve all saved keywords from the SearchHistoryKeyword collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
+      // - Is able to retrieve all saved keywords from the SearchHistorySelection collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
 
 
       
