@@ -25,8 +25,7 @@ router.get('/', async (req, res) => {
       
     } else {
       // If the value is selections
-      // TODO: Get search history by selections
-      // - Is able to retrieve all saved keywords from the SearchHistoryKeyword collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
+      // Retrieve all saved keywords from the SearchHistoryKeyword collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
 
       const cursor = await db.find('SearchHistorySelection')
       const results = await cursor.toArray();
