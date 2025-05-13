@@ -1,5 +1,4 @@
 import axios from 'axios';
-import db from './db.js';
 
 // base anilist API url
 const API_URL = 'https://graphql.anilist.co';

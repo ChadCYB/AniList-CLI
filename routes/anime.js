@@ -8,16 +8,11 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { keyword } = req.query;
-    // TODO: Search anime by keyword
-    // - Interacts with the api.js to perform the to search by keyword and returns a JSON response
-    // - The JSON response should be minimal and clean, containing only two keys for each item:
-    //   - display: a readable display name associated with the keyword
-    //   - identifier: the ID and/or value needed to perform future requests
-    // - Saves unique search keywords to the MongoDB SearchHistoryKeyword collection
+    // Handles validation of the keyword parameter
     if (!keyword) {
       return res.status(400).json({ error: 'Keyword is required' });
     }
-
+   
     const results = await api.searchByKeyword(keyword);
 
     const formattedResults = results.map(item => {
@@ -29,7 +24,7 @@ router.get('/', async (req, res) => {
         identifier: item.id || item.identifier || item.mal_id || 'No ID'
       };
     });
-
+    // Check if the keyword is already saved in the database
     // Save the keyword if it's not already saved
     const cursor = await db.find('SearchHistoryKeyword', { keyword });
     const result = await cursor.toArray(); 
@@ -53,15 +48,18 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // TODO: Get anime by ID
-    // - Interacts with the api.js to perform the get data by id and returns a JSON response
-    // - Saves unique selections to the MongoDB SearchHistorySelection collection
 
+    const animeData = await api.getByIdentifier(id);
 
+    const existing = await db.find('SearchHistorySelection', { id: animeData.id });
 
+    const existingArray = await existing.toArray();
 
+    if (existingArray.length === 0) {
+      await db.insert('SearchHistorySelection', animeData);
+    }
+    return res.json(animeData);
 
-    // return res.json(XXX);
   } catch (error) {
     console.error('Error getting anime details:', error);
     return res.status(500).json({ error: 'Internal server error' });
