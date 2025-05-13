@@ -1,0 +1,22 @@
+### AniList API Test
+@apiurl = http://localhost:3000
+
+
+###
+// GET /anime - Search anime by keyword
+GET {{apiurl}}/anime?keyword=naruto
+
+
+###
+// GET /anime/:id - Get anime by ID
+GET {{apiurl}}/anime/20
+
+
+###
+// GET /history - Get search history by keywords
+GET {{apiurl}}/history?type=keywords
+
+
+###
+// GET /history - Get search history by selections
+GET {{apiurl}}/history?type=selections
