@@ -23,7 +23,6 @@ export const searchByKeyword = async (keyword, page = 1, perPage = 10, results =
         }
       }
     `;
-    await db.insert('SearchHistoryKeyword', { keyword });
     const variables = { page, perPage, search: keyword };
     const response = await axios.post(API_URL, { query, variables });
     const pageInfo = response.data.data.Page.pageInfo;
