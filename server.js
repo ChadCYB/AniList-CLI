@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import animeRoutes from './routes/anime.js';
 import historyRoutes from './routes/history.js';
-import db from './db.js';
+import db from './services/db.js';
 
 // Load environment variables
 dotenv.config();

@@ -1,6 +1,6 @@
 import express from 'express';
-import * as api from '../api.js';
-import db from '../db.js';
+import * as api from '../services/api.js';
+import db from '../services/db.js';
 
 const router = express.Router();
 
