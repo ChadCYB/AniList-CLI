@@ -19,9 +19,15 @@ router.get('/', async (req, res) => {
 
     if (type === 'keywords') {
 
-      const keywords = await db.find('SearchHistoryKeyword', {}, { projection: { _id: 0 } });
-
-      return res.json(keywords);
+      const keywords = await db.find('SearchHistoryKeyword');
+      const results = await keywords.toArray(); // Convert and close
+      // Format the results to remove the MongoDB _id field
+      const formatted = results.map(keyword => ({
+        keyword: keyword.keyword,
+        date: keyword.date
+      }));
+      // Send the response
+      return res.json(formatted);
       // If the value is keywords
       // TODO: Get search history by keywords
       // - Is able to retrieve all saved selections from the SearchHistoryKeyword collection in MongoDB and return them in clean JSON format that does not include the Mongo _id
